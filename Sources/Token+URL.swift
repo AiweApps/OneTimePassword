@@ -34,6 +34,7 @@ public extension Token {
         return try urlForToken(
             name: name,
             issuer: issuer,
+            backupCodes: backupCodes,
             factor: generator.factor,
             algorithm: generator.algorithm,
             digits: generator.digits
@@ -83,6 +84,7 @@ private let kQueryCounterKey = "counter"
 private let kQueryDigitsKey = "digits"
 private let kQueryPeriodKey = "period"
 private let kQueryIssuerKey = "issuer"
+private let kQueryBackupCodesKey = "backupCodes"
 
 private let kFactorCounterKey = "hotp"
 private let kFactorTimerKey = "totp"
@@ -125,6 +127,10 @@ private func urlForToken(name: String, issuer: String, factor: Generator.Factor,
         URLQueryItem(name: kQueryDigitsKey, value: String(digits)),
         URLQueryItem(name: kQueryIssuerKey, value: issuer),
     ]
+
+    if let backupCodes = backupCodes {
+        queryItems.append(URLQueryItem(name: kQueryBackupCodesKey, value: backupCodes))
+    }
 
     switch factor {
     case .timer(let period):
@@ -184,6 +190,8 @@ private func token(from url: URL, secret externalSecret: Data? = nil) throws -> 
         // The default value is an empty string
         issuer = ""
     }
+
+    let backupCodes = try? queryItems.value(for: kQueryBackupCodesKey)
 
     // If the name is prefixed by the issuer string, trim the name
     let name = shortName(byTrimming: issuer, from: fullName)
