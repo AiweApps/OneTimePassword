@@ -37,6 +37,9 @@ public struct Token: Equatable {
     /// A password generator containing this token's secret, algorithm, etc.
     public let generator: Generator
 
+    /// Backup codes string
+    public let backupCodes: String?
+
     /// Initializes a new token with the given parameters.
     ///
     /// - parameter name:       The account name for the token (defaults to "").
@@ -44,9 +47,10 @@ public struct Token: Equatable {
     /// - parameter generator:  The password generator.
     ///
     /// - returns: A new token with the given parameters.
-    public init(name: String = "", issuer: String = "", generator: Generator) {
+    public init(name: String = "", issuer: String = "", backupCodes: String? = nil, generator: Generator) {
         self.name = name
         self.issuer = issuer
+        self.backupCodes = backupCodes
         self.generator = generator
     }
 
