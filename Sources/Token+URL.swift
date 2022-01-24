@@ -117,7 +117,7 @@ private func algorithmFromString(_ string: String) throws -> Generator.Algorithm
     }
 }
 
-private func urlForToken(name: String, issuer: String, factor: Generator.Factor, algorithm: Generator.Algorithm, digits: Int) throws -> URL {
+private func urlForToken(name: String, issuer: String, backupCodes: String?, factor: Generator.Factor, algorithm: Generator.Algorithm, digits: Int) throws -> URL {
     var urlComponents = URLComponents()
     urlComponents.scheme = kOTPAuthScheme
     urlComponents.path = "/" + name
@@ -196,7 +196,7 @@ private func token(from url: URL, secret externalSecret: Data? = nil) throws -> 
     // If the name is prefixed by the issuer string, trim the name
     let name = shortName(byTrimming: issuer, from: fullName)
 
-    return Token(name: name, issuer: issuer, generator: generator)
+    return Token(name: name, issuer: issuer, backupCodes: backupCodes, generator: generator)
 }
 
 private func parseCounterValue(_ rawValue: String) throws -> UInt64 {
