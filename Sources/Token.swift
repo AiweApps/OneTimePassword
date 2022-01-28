@@ -27,6 +27,10 @@ import Foundation
 
 /// A `Token` contains a password generator and information identifying the corresponding account.
 public struct Token: Equatable {
+    
+    /// Unique identifier
+    public let identifier: String
+    
     /// A string indicating the account represented by the token.
     /// This is often an email address or username.
     public let name: String
@@ -47,7 +51,9 @@ public struct Token: Equatable {
     /// - parameter generator:  The password generator.
     ///
     /// - returns: A new token with the given parameters.
-    public init(name: String = "", issuer: String = "", backupCodes: String? = nil, generator: Generator) {
+    public init(identifier: String? = nil, name: String = "", issuer: String = "",
+                backupCodes: String? = nil, generator: Generator) {
+        self.identifier = identifier ?? UUID().uuidString
         self.name = name
         self.issuer = issuer
         self.backupCodes = backupCodes
