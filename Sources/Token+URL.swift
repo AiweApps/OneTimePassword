@@ -31,14 +31,7 @@ public extension Token {
 
     /// Serializes the token to a URL.
     func toURL() throws -> URL {
-        return try urlForToken(
-            name: name,
-            issuer: issuer,
-            backupCodes: backupCodes,
-            factor: generator.factor,
-            algorithm: generator.algorithm,
-            digits: generator.digits
-        )
+        return try urlForToken(self)
     }
 
     /// Attempts to initialize a token represented by the give URL.
@@ -85,6 +78,7 @@ private let kQueryDigitsKey = "digits"
 private let kQueryPeriodKey = "period"
 private let kQueryIssuerKey = "issuer"
 private let kQueryBackupCodesKey = "backupCodes"
+private let kQueryIdentifierKey = "identifier"
 
 private let kFactorCounterKey = "hotp"
 private let kFactorTimerKey = "totp"
@@ -117,22 +111,23 @@ private func algorithmFromString(_ string: String) throws -> Generator.Algorithm
     }
 }
 
-private func urlForToken(name: String, issuer: String, backupCodes: String?, factor: Generator.Factor, algorithm: Generator.Algorithm, digits: Int) throws -> URL {
+private func urlForToken(_ token: Token) throws -> URL {
     var urlComponents = URLComponents()
     urlComponents.scheme = kOTPAuthScheme
-    urlComponents.path = "/" + name
+    urlComponents.path = "/" + token.name
 
     var queryItems = [
-        URLQueryItem(name: kQueryAlgorithmKey, value: stringForAlgorithm(algorithm)),
-        URLQueryItem(name: kQueryDigitsKey, value: String(digits)),
-        URLQueryItem(name: kQueryIssuerKey, value: issuer),
+        URLQueryItem(name: kQueryIdentifierKey, value: token.identifier),
+        URLQueryItem(name: kQueryAlgorithmKey, value: stringForAlgorithm(token.generator.algorithm)),
+        URLQueryItem(name: kQueryDigitsKey, value: String(token.generator.digits)),
+        URLQueryItem(name: kQueryIssuerKey, value: token.issuer),
     ]
 
-    if let backupCodes = backupCodes {
+    if let backupCodes = token.backupCodes, !backupCodes.isEmpty {
         queryItems.append(URLQueryItem(name: kQueryBackupCodesKey, value: backupCodes))
     }
 
-    switch factor {
+    switch token.generator.factor {
     case .timer(let period):
         urlComponents.host = kFactorTimerKey
         queryItems.append(URLQueryItem(name: kQueryPeriodKey, value: String(Int(period))))
@@ -191,12 +186,13 @@ private func token(from url: URL, secret externalSecret: Data? = nil) throws -> 
         issuer = ""
     }
 
+    let identifier = try? queryItems.value(for: kQueryIdentifierKey)
     let backupCodes = try? queryItems.value(for: kQueryBackupCodesKey)
 
     // If the name is prefixed by the issuer string, trim the name
     let name = shortName(byTrimming: issuer, from: fullName)
 
-    return Token(name: name, issuer: issuer, backupCodes: backupCodes, generator: generator)
+    return Token(identifier: identifier, name: name, issuer: issuer, backupCodes: backupCodes, generator: generator)
 }
 
 private func parseCounterValue(_ rawValue: String) throws -> UInt64 {
