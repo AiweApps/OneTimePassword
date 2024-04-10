@@ -212,6 +212,7 @@ private func keychainItem(forPersistentRef persistentRef: Data) throws -> NSDict
         kSecReturnPersistentRef as String:  kCFBooleanTrue,
         kSecReturnAttributes as String:     kCFBooleanTrue,
         kSecReturnData as String:           kCFBooleanTrue,
+        kSecAttrService as String:          kOTPService as NSString,
     ]
 
     var result: AnyObject?
@@ -233,12 +234,20 @@ private func keychainItem(forPersistentRef persistentRef: Data) throws -> NSDict
 }
 
 private func allKeychainItems() throws -> [NSDictionary] {
+    let isMac: Bool = {
+        #if os(OSX)
+        return true
+        #endif
+        return false
+    }()
+    
     let queryDict: [String: AnyObject] = [
         kSecClass as String:                kSecClassGenericPassword,
         kSecMatchLimit as String:           kSecMatchLimitAll,
         kSecReturnPersistentRef as String:  kCFBooleanTrue,
         kSecReturnAttributes as String:     kCFBooleanTrue,
-        kSecReturnData as String:           kCFBooleanTrue,
+        kSecReturnData as String:           isMac ? kCFBooleanFalse : kCFBooleanTrue,
+        kSecAttrService as String:          kOTPService as NSString,
     ]
 
     var result: AnyObject?
@@ -255,6 +264,12 @@ private func allKeychainItems() throws -> [NSDictionary] {
     }
     guard let keychainItems = result as? [NSDictionary] else {
         throw Keychain.Error.incorrectReturnType
+    }
+    //small macos workaround that fixes `errSecParam` error
+    if isMac {
+        return try keychainItems
+            .compactMap { item in item[kSecValuePersistentRef] as? Data }
+            .compactMap(keychainItem)
     }
     return keychainItems
 }
