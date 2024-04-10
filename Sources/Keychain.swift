@@ -267,9 +267,9 @@ private func allKeychainItems() throws -> [NSDictionary] {
     }
     //small macos workaround that fixes `errSecParam` error
     if isMac {
-        return try keychainItems
+        return keychainItems
             .compactMap { item in item[kSecValuePersistentRef] as? Data }
-            .compactMap(keychainItem)
+            .compactMap { data in try? keychainItem(forPersistentRef: data) }
     }
     return keychainItems
 }
